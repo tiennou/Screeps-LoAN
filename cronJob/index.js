@@ -1,7 +1,6 @@
 import winston from "winston"
 import 'winston-daily-rotate-file'
 import cron from "node-cron"
-import { execSync } from 'child_process';
 import Docker from "dockerode"
 
 const docker = new Docker();
