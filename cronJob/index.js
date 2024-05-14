@@ -86,3 +86,9 @@ async function update() {
 cron.schedule('0 */6 * * *', () => {
     update();
 });
+try {
+    update();
+    console.log("Succeeded first test")
+} catch (error) {
+    console.log("Failed first test")
+}
