@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 x-logging: &default-logging
   driver: "local"
@@ -24,7 +24,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-net"
-      
+
       - "traefik.http.routers.loan-https.rule=Host(`loan.pandascreeps.com`)"
       - "traefik.http.routers.loan-https.entrypoints=websecure"
       - "traefik.http.routers.loan-https.tls.certresolver=letsencrypt"
@@ -55,7 +55,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready", "-U", "screeps"]
     ports:
-      - 127.0.0.1:5434:5432
+      - 5434:5432
   pgbackups:
     image: kartoza/pg-backup:14-3.2
     restart: always
@@ -65,12 +65,12 @@ services:
     networks:
       - traefik-net
     environment:
-        - POSTGRES_USER=${DB_USERNAME}
-        - POSTGRES_PASS=${DB_PASSWORD}
-        - POSTGRES_DB=${DB}
-        - POSTGRES_HOST=postgresLoAN
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASS=${DB_PASSWORD}
+      - POSTGRES_DB=${DB}
+      - POSTGRES_HOST=postgresLoAN
     volumes:
-        - /var/opt/pgbackups:/backups
+      - /var/opt/pgbackups:/backups
   cronjob:
     build: cronJob
     logging: *default-logging
