@@ -1,4 +1,5 @@
 import winston from "winston"
+import 'winston-daily-rotate-file'
 import cron from "node-cron"
 import { execSync } from 'child_process';
 import Docker from "dockerode"
@@ -8,8 +9,14 @@ const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
     transports: [
-        new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-        new winston.transports.File({ filename: 'logs/combined.log' }),
+        new winston.transports.DailyRotateFile({
+            filename: `logs/application-%DATE%.log`,
+            auditFile: `logs/audit.json`,
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '14d'
+        })
     ],
 });
 
@@ -45,7 +52,7 @@ async function executeCommand(container, cmd) {
 async function update() {
     logger.info("Started update")
 
-    const containerName = 'screepsloan-loan-1'
+    const containerName = 'screepsloan-loan_1'
 
     const container = docker.getContainer(containerName);
     const commands = [
