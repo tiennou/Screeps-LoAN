@@ -81,3 +81,5 @@ services:
       - "./logs:/usr/app/logs"
     networks:
       - traefik-net
+    depends_on:
+      - loan
