@@ -51,21 +51,20 @@ async function executeCommand(container, cmd) {
 async function update() {
     logger.info("Started update")
 
-    const containerName = 'screepsloan-loan_1'
+    const containerName = 'screepsloan_loan_1'
 
     const container = docker.getContainer(containerName);
     const commands = [
-        ['flask', 'import-users'],
-        ['flask', 'import-rankings'],
-        ['flask', 'import-user-rankings']
+        ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py import-users'],
+        ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py import-rankings'],
+        ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py import-user-rankings'],
     ]
     for (let i = 0; i < commands.length; i++) {
-        const baseCommand = commands[i];
-        const command = `docker exec ${containerName} ${baseCommand}`;
+        const command = commands[i];
         try {
             const startTime = Date.now();
             logger.info(`Starting ${command}`)
-            await executeCommand(container, baseCommand)
+            await executeCommand(container, command)
 
             const endTime = Date.now();
             const timeTakenMilliseconds = endTime - startTime;
@@ -88,11 +87,7 @@ cron.schedule('0 */6 * * *', () => {
 
 async function init() {
     console.log("Starting update...")
-    try {
-        await update();
-        console.log("Succeeded first test")
-    } catch (error) {
-        console.log("Failed first test")
-    }
+    await update();
+    console.log("Finished first test")
 }
 init();
