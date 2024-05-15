@@ -108,9 +108,9 @@ app.get('/', function (req, res) {
     const timeSinceLastErrorInHours = Math.round(timeSinceLastErrorInMinutes / 60);
     const timeSinceLastErrorInDays = Math.round(timeSinceLastErrorInHours / 24);
     if (timeSinceLastErrorInDays < 1) {
-        res.sendStatus(200).send("No errors in the last 24 hours");
+        res.status(200).send("No errors in the last 24 hours");
     } else {
-        res.sendStatus(500).send(`Last error was ${timeSinceLastErrorInDays} days ago`);
+        res.status(500).send(`Last error was ${timeSinceLastErrorInDays} days ago`);
     }
 })
 
