@@ -57,8 +57,8 @@ ORDER BY alliances.shortname;
         import_id = result[0]
 
         query = """
-          SELECT
-            t.alliance,
+SELECT
+            t.shortname,
             string_agg(t.ign, ',') AS members,
             SUM(CASE WHEN t.room_count > 0 THEN 1 ELSE 0 END) AS active_member_count,
             SUM(t.room_count) AS room_count
@@ -67,7 +67,8 @@ ORDER BY alliances.shortname;
                 SELECT
                   COUNT(DISTINCT rooms.name) AS room_count,
                   users.ign,
-                  users.alliance
+                  users.alliance_id,
+                  alliances.shortname
                   FROM
                       users
                     JOIN
@@ -79,17 +80,18 @@ ORDER BY alliances.shortname;
                     ON
                         rooms.owner = users.id
                       AND
-                        rooms.import = %s
+                        rooms.import = 88
                   GROUP BY
                     users.ign,
-                    users.alliance
+                    users.alliance_id,
+                    alliances.shortname
                   ORDER BY
                     users.ign
             ) t
           GROUP BY
-            t.alliance
+            t.shortname
           ORDER BY
-            t.alliance;
+            t.shortname;
         """
         result = db.find_all(query, (import_id,))
         return_value = []
