@@ -3,6 +3,11 @@ import 'winston-daily-rotate-file'
 import cron from "node-cron"
 import Docker from "dockerode"
 
+import express from "express"
+const app = express()
+
+const lastErrorTimestamp = 0;
+
 const docker = new Docker();
 const logger = winston.createLogger({
     level: 'info',
@@ -76,6 +81,8 @@ async function update() {
         } catch (e) {
             logger.error(`Command: ${command}`)
             logger.error(e)
+
+            lastErrorTimestamp = Date.now();
         }
     }
 
@@ -96,3 +103,20 @@ async function init() {
     }
 }
 init();
+
+app.get('/', function (req, res) {
+    const timeNow = Date.now();
+    const timeSinceLastError = timeNow - lastErrorTimestamp;
+
+    const timeSinceLastErrorInSeconds = Math.round(timeSinceLastError / 1000);
+    const timeSinceLastErrorInMinutes = Math.round(timeSinceLastErrorInSeconds / 60);
+    const timeSinceLastErrorInHours = Math.round(timeSinceLastErrorInMinutes / 60);
+    const timeSinceLastErrorInDays = Math.round(timeSinceLastErrorInHours / 24);
+    if (timeSinceLastErrorInDays < 1) {
+        res.sendStatus(200).send("No errors in the last 24 hours");
+    } else {
+        res.sendStatus(500).send(`Last error was ${timeSinceLastErrorInDays} days ago`);
+    }
+})
+
+app.listen(3000)

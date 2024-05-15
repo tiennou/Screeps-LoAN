@@ -83,3 +83,5 @@ services:
       - traefik-net
     depends_on:
       - loan
+    ports:
+      - 5003:3000
