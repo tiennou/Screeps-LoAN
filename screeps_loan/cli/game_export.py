@@ -38,7 +38,7 @@ def export_to_segments():
         ]
         if len(members) < 2:
             continue
-        alliances_aux[alliance["id"]] = members
+        alliances_aux[alliance["shortname"]] = members
 
     alliance_json = json.dumps(alliances_aux)
 
