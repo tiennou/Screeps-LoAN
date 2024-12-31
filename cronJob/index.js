@@ -63,6 +63,7 @@ async function update() {
         ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py import-users'],
         ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py import-rankings'],
         ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py import-user-rankings'],
+        ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py export-to-segments'],
     ]
     for (let i = 0; i < commands.length; i++) {
         const command = commands[i];
