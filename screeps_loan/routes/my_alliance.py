@@ -63,9 +63,7 @@ def update_my_alliance_charter():
 @app.route("/my/updateprofile", methods=["POST"])
 @admin_required
 def update_my_alliance_profile():
-    import screeps_loan.models.alliances as alliances
-
-    alliance_query = alliances.AllianceQuery()
+    alliance_query = alliances_model.AllianceQuery()
 
     if re.match("^[\w|\s|-]+$", request.form["fullname"]):
         fullname = request.form["fullname"]
@@ -90,7 +88,7 @@ def update_my_alliance_profile():
         if oAlliance["id"] != alliance["id"] and (
             oAlliance["fullname"] == fullname
             or oAlliance["shortname"] == shortname
-            or oAlliance["discord_url"] == discord_url
+            or (oAlliance["discord_url"] == discord_url and discord_url is not None)
         ):
             return redirect(url_for("my_alliance"))
 

@@ -185,7 +185,7 @@ ORDER BY
             return result[0]
         return None
 
-    def insert_alliance(self, shortname, fullname, color="#000000", discord_url=None):
+    def insert_alliance(self, shortname, fullname, color="#000000", discord_url=""):
         conn = db.get_conn()
         try:
             query = """INSERT INTO alliances(shortname, fullname, color, discord_url) \
@@ -233,6 +233,9 @@ def update_charter_of_alliance(alliance_id, user_id, charter):
 def update_all_alliances_info(
     alliance_id, user_id, new_shortname, fullname, discord_url, color="#000000"
 ):
+    if (discord_url is None):
+        discord_url = ""
+    
     conn = db.get_conn()
     try:
         color = str(color)
