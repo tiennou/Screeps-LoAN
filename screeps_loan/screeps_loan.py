@@ -23,7 +23,9 @@ import screeps_loan.cli.import_rankings
 import screeps_loan.cli.import_user
 import screeps_loan.cli.maintenance
 import screeps_loan.cli.manage
+import screeps_loan.cli.pull_vk
 
+import screeps_loan.routes.api
 import screeps_loan.routes.auth
 import screeps_loan.routes.alliances
 import screeps_loan.routes.errors
