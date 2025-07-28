@@ -51,9 +51,9 @@ def index():
 @app.after_request
 def add_header(response):
     if "Cache-Control" not in response.headers:
-        response.headers[
-            "Cache-Control"
-        ] = "private, no-store, no-cache, must-revalidate"
+        response.headers["Cache-Control"] = (
+            "private, no-store, no-cache, must-revalidate"
+        )
         response.headers["Pragma"] = "no-cache"
     return response
 
