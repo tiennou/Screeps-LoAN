@@ -56,7 +56,7 @@ async function executeCommand(container, cmd) {
 async function update() {
     logger.info("Started update")
 
-    const containerName = 'screepsloan_loan_1'
+    const containerName = process.env.LOAN_DOCKER_HOST ?? 'screepsloan-loan-1'
 
     const container = docker.getContainer(containerName);
     const commands = [
