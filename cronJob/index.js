@@ -6,7 +6,7 @@ import Docker from "dockerode"
 import express from "express"
 const app = express()
 
-const lastErrorTimestamp = 0;
+let lastErrorTimestamp = 0;
 
 const docker = new Docker();
 const logger = winston.createLogger({
