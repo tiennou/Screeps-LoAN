@@ -15,20 +15,23 @@ ADD
     COLUMN alliance_id integer NOT NULL;
 
 ALTER TABLE
-    alliances
-ADD
-    COLUMN id SERIAL;
+    ONLY users DROP CONSTRAINT lnk_users_alliances;
 
 ALTER TABLE
-    ONLY users DROP CONSTRAINT lnk_users_alliances;
+    ONLY alliance_invites DROP CONSTRAINT lnk_alliance_invites_alliances;
+
+ALTER TABLE
+    alliances DROP CONSTRAINT alliances_pkey;
+
+ALTER TABLE
+    alliances
+ADD
+    COLUMN id SERIAL PRIMARY KEY;
 
 ALTER TABLE
     ONLY users
 ADD
     CONSTRAINT lnk_users_alliances FOREIGN KEY (alliance_id) REFERENCES alliances(id) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE;
-
-ALTER TABLE
-    ONLY alliance_invites DROP CONSTRAINT lnk_users_alliances;
 
 ALTER TABLE
     ONLY alliance_invites
