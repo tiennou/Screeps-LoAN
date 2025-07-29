@@ -44,8 +44,10 @@ unaffiliated=none, disablelabels=none) -%}
             });
             mapView.setSpinnerVisibile(true);
             $.when(
-                $.getJSON('/map/{{ shard }}/alliances.js', {}, function (data) {
+                $.getJSON('{{ alliance_url }}', {}, function (data) {
                     console.log('alliance data loaded')
+                    if ('{{ alliance_url }}' === "/vk/bots/league.json")
+                        data = data.bots
                     alliance_data = data
                 }),
                 $.getJSON('/map/{{ shard }}/rooms.js', {}, function (data) {
