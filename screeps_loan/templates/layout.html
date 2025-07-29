@@ -77,33 +77,36 @@
                         </li>
 
                         <li>
-                            <i class="fa fa-trophy"></i>
-                            <a href="{{url_for('player_rankings_combined')}}">Player Rankings </a>
-                        </li>
-                        <li>
-                            <i class="fa fa-trophy"></i>
-                            <a href="{{url_for('player_rankings_gcl')}}">Player GCL Rankings </a>
-                        </li>
-                        <li>
-                            <i class="fa fa-trophy"></i>
-                            <a href="{{url_for('player_rankings_power')}}">Player Power Rankings </a>
+                            <i class="fa fa-trophy"></i>Player Rankings
+                            <ul>
+                                <li>
+                                    <a href="{{url_for('player_rankings_combined')}}">Combined</a>
+                                </li>
+                                <li>
+                                    <a href="{{url_for('player_rankings_gcl')}}">GCL</a>
+                                </li>
+                                <li>
+                                    <a href="{{url_for('player_rankings_power')}}">Power</a>
+                                </li>
+                            </ul>
                         </li>
 
 
                         {% for shard in shard_list() %}
                         <li>
-                            <i class="fa fa-globe"></i>
-                            <a href="{{url_for('map', shard=shard)}}">{{ shard }} Alliance Map </a>
+                            <i class="fa fa-globe"></i>{{ shard }} Maps
+                            <ul>
+                                <li>
+                                    <a href="{{url_for('map', shard=shard)}}">Alliances</a>
+                                </li>
+                                <li>
+                                    <a href="{{url_for('map_users', shard=shard)}}">Players</a>
+                                </li>
+                                <li>
+                                    <a href="{{url_for('map_bots', shard=shard)}}">Clones</a>
+                                </li>
+                            </ul>
                         </li>
-                        <li>
-                            <i class="fa fa-globe"></i>
-                            <a href="{{url_for('map_users', shard=shard)}}">{{ shard }} Player Map </a>
-                        </li>
-                        <li>
-                            <i class="fa fa-globe"></i>
-                            <a href="{{url_for('map_bots', shard=shard)}}">{{ shard }} Clone Map </a>
-                        </li>
-
                         {% endfor %}
 
                         <li>
