@@ -12,6 +12,9 @@ services:
     volumes:
       - ./data/loan:/data
       - ./data/storage:${OBJECT_STORAGE}
+      - ./data/vk:/app/screeps_loan/static/vk
+    environment:
+      - FLASK_ENV=development
     ports:
       - 5000:5000
     depends_on:
