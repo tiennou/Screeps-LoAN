@@ -60,6 +60,7 @@ async function update() {
 
     const container = docker.getContainer(containerName);
     const commands = [
+        ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py pull-vk'],
         ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py import-users'],
         ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py import-rankings'],
         ['/bin/sh', '-c', 'flask --app screeps_loan/screeps_loan.py import-user-rankings'],
