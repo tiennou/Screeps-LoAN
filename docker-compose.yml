@@ -42,4 +42,4 @@ services:
         - POSTGRES_DB=${DB}
         - POSTGRES_HOST=postgres
     volumes:
-        - /var/opt/pgbackups:/backups
+        - ./data/backups:/backups
