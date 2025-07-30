@@ -1,4 +1,6 @@
-{% macro multipleMaps() -%}
+{% macro multipleMaps(shortname=None) -%}
+{% from "macros/_map_tooltip.html" import map_tooltip with context %}
+
 <ul class="tabs" data-tabs id="tabs_maps">
     <li class="tabs-title is-active"><a href="#panelMap0" aria-selected="true"
             onclick="initializeShard('shard0')">Shard0</a></li>
@@ -14,20 +16,7 @@
                 <div id="ScreepsMapContainer-shard0" class="ScreepsMapContainer"></div>
                 <div id="ScreepsColorKeyContainer-shard0" class="ScreepsColorKeyContainer"></div>
             </div>
-            <div id="ScreepsMapTooltip-shard0" class="ScreepsMapTooltip" style="display: none;">
-                <dl>
-                    <dt>Room:</dt>
-                    <div class="roomName"></div>
-                    <dt>Type:</dt>
-                    <div class="roomType"></div>
-                    <dt>RCL:</dt>
-                    <div class="roomLevel"></div>
-                    <dt>Owner:</dt>
-                    <div class="roomOwner"></div>
-                    <dt>Alliance:</dt>
-                    <div class="roomAlliance"></div>
-                </dl>
-            </div>
+            {{ map_tooltip(tooltipId="ScreepsMapTooltip-shard0") }}
         </div>
     </div>
     <div class="tabs-panel" id="panelMap1">
@@ -36,20 +25,7 @@
                 <div id="ScreepsMapContainer-shard1" class="ScreepsMapContainer"></div>
                 <div id="ScreepsColorKeyContainer-shard1" class="ScreepsColorKeyContainer"></div>
             </div>
-            <div id="ScreepsMapTooltip-shard1" class="ScreepsMapTooltip" style="display: none;">
-                <dl>
-                    <dt>Room:</dt>
-                    <div class="roomName"></div>
-                    <dt>Type:</dt>
-                    <div class="roomType"></div>
-                    <dt>RCL:</dt>
-                    <div class="roomLevel"></div>
-                    <dt>Owner:</dt>
-                    <div class="roomOwner"></div>
-                    <dt>Alliance:</dt>
-                    <div class="roomAlliance"></div>
-                </dl>
-            </div>
+            {{ map_tooltip(tooltipId="ScreepsMapTooltip-shard1") }}
         </div>
     </div>
     <div class="tabs-panel" id="panelMap2">
@@ -58,20 +34,7 @@
                 <div id="ScreepsMapContainer-shard2" class="ScreepsMapContainer"></div>
                 <div id="ScreepsColorKeyContainer-shard2" class="ScreepsColorKeyContainer"></div>
             </div>
-            <div id="ScreepsMapTooltip-shard2" class="ScreepsMapTooltip" style="display: none;">
-                <dl>
-                    <dt>Room:</dt>
-                    <div class="roomName"></div>
-                    <dt>Type:</dt>
-                    <div class="roomType"></div>
-                    <dt>RCL:</dt>
-                    <div class="roomLevel"></div>
-                    <dt>Owner:</dt>
-                    <div class="roomOwner"></div>
-                    <dt>Alliance:</dt>
-                    <div class="roomAlliance"></div>
-                </dl>
-            </div>
+            {{ map_tooltip(tooltipId="ScreepsMapTooltip-shard2") }}
         </div>
     </div>
     <div class="tabs-panel" id="panelMap3">
@@ -80,53 +43,32 @@
                 <div id="ScreepsMapContainer-shard3" class="ScreepsMapContainer"></div>
                 <div id="ScreepsColorKeyContainer-shard3" class="ScreepsColorKeyContainer"></div>
             </div>
-            <div id="ScreepsMapTooltip-shard3" class="ScreepsMapTooltip" style="display: none;">
-                <dl>
-                    <dt>Room:</dt>
-                    <div class="roomName"></div>
-                    <dt>Type:</dt>
-                    <div class="roomType"></div>
-                    <dt>RCL:</dt>
-                    <div class="roomLevel"></div>
-                    <dt>Owner:</dt>
-                    <div class="roomOwner"></div>
-                    <dt>Alliance:</dt>
-                    <div class="roomAlliance"></div>
-                </dl>
-            </div>
+            {{ map_tooltip(tooltipId="ScreepsMapTooltip-shard3") }}
         </div>
     </div>
 </div>
 
 <script type="text/javascript" language="javascript">
     const mapViews = {};
+    const regions = {}
     const rooms = {};
     const alliances = {};
-    const regions = {}
+    const zones = {};
+    const shortName = '{{ shortname }}';
+    const maxRoomShard = {
+        shard0: "{{ maxroomshard0 }}",
+        shard1: "{{ maxroomshard1 }}",
+        shard2: "{{ maxroomshard2 }}",
+        shard3: "{{ maxroomshard3 }}",
+    }
 
-
-    function initializeShard(shard) {
+    async function initializeShard(shard) {
         if (rooms[shard]) return;
-        let maxRoom = 100;
-        switch (shard) {
-            case "shard0":
-                maxRoom = "{{ maxroomshard0 }}"
-                break;
-            case "shard1":
-                maxRoom = "{{ maxroomshard1 }}"
-                break;
-            case "shard2":
-                maxRoom = "{{ maxroomshard2 }}"
-                break;
-            case "shard3":
-                maxRoom = "{{ maxroomshard3 }}"
-                break;
-            default:
-                break;
-        }
+        let maxRoom = maxRoomShard[shard] ?? 100;
 
         rooms[shard] = {};
         alliances[shard] = {};
+        zones[shard] = {};
         regions[shard] = new ScreepsRegion(`W${maxRoom}N${maxRoom}`, `E${maxRoom}S${maxRoom}`);
         mapViews[shard] = new ScreepsMap(
             {
@@ -141,36 +83,28 @@
                 style: { 'room-padding': 10 }
             });
 
-        mapViews[shard].setSpinnerVisibile(true);
-        console.log("Start", shard)
-        $.when(
-            $.getJSON(`/map/${shard}/alliances.js`, {}, function (data) {
-                console.log('alliance data loaded', shard, data);
-                alliances[shard] = data;
-            }),
-            $.getJSON(`/map/${shard}/rooms.js`, {}, function (data) {
-                console.log('room data loaded', shard, data);
-                rooms[shard] = data;
-            })
-        ).then(function () {
-            console.log("Then", shard)
-            mapViews[shard].setData(
-                rooms[shard],
-                alliances[shard]
-            );
-            mapViews[shard].setAlliance('{{ shortname }}');
-            mapViews[shard].setGroupType('user');
-            mapViews[shard].allowUnaffiliated();
-            mapViews[shard].render();
-            console.log(shard, mapViews[shard], "rendered")
-        });
+        mapViews[shard].setSpinnerVisible(true);
+
+        rooms[shard] = await $.getJSON(`/map/${shard}/rooms.js`);
+        console.log('room data loaded', shard, rooms[shard]);
+        mapViews[shard].setRoomData(rooms[shard]);
+
+        alliances[shard] = await $.getJSON(`/map/${shard}/alliances.js`);
+        console.log('alliance data loaded', shard, alliances[shard]);
+        mapViews[shard].setAllianceData(alliances[shard]);
+
+        zones[shard] = await $.getJSON(`/scanner/${shard}.novice.area.json`);
+        console.log('zone data loaded', shard, zones[shard]);
+        mapViews[shard].setZoneData(zones[shard]);
+
+        mapViews[shard].setAlliance(shortName);
+        mapViews[shard].setGroupType('user');
+        // mapViews[shard].allowUnaffiliated();
+        mapViews[shard].render();
     };
 
     window.onload = function () {
         initializeShard("shard0")
-        // initializeShard("shard1")
-        // initializeShard("shard2")
-        // initializeShard("shard3")
     }
 </script>
 

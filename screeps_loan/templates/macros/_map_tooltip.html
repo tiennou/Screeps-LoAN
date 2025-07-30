@@ -1,0 +1,20 @@
+{% macro map_tooltip(tooltipId='ScreepsMapTooltip') -%}
+<div id="{{ tooltipId }}" class="ScreepsMapTooltip" style="display: none;">
+    <dl>
+        <dt>Room:</dt>
+        <div class="roomName"></div>
+        <dt>Type:</dt>
+        <div class="roomType"></div>
+        <dt>RCL:</dt>
+        <div class="roomLevel"></div>
+        <dt>Owner:</dt>
+        <div class="roomOwner"></div>
+        <dt>Alliance:</dt>
+        <div class="roomAlliance"></div>
+        <dt>Zone:</dt>
+        <div class="zoneType"></div>
+        <dt>Zone end:</dt>
+        <div class="zoneEnd"></div>
+    </dl>
+</div>
+{% endmacro %}

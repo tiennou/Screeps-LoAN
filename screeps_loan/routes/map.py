@@ -86,16 +86,16 @@ def alliance_listing_json_by_shard(shard=None):
 
 @app.route("/map/<shard>")
 def map(shard):
-    maxroom = get_shard_size(shard)
+    max_size = get_shard_size(shard)
     return render_template(
-        "map.html", alliance_url="/alliances.js", shard=shard, maxroom=maxroom
+        "map.html", alliance_url="/alliances.js", shard=shard, max_size=max_size
     )
 
 
 @app.route("/map/<shard>/users")
 def map_users(shard):
-    maxroom = get_shard_size(shard)
-    return render_template("map_users.html", shard=shard, maxroom=maxroom)
+    max_size = get_shard_size(shard)
+    return render_template("map_users.html", shard=shard, max_size=max_size)
 
 
 botmapurl = "/vk/bots/league.json"
@@ -103,9 +103,9 @@ botmapurl = "/vk/bots/league.json"
 
 @app.route("/map/<shard>/bots")
 def map_bots(shard):
-    maxroom = get_shard_size(shard)
+    max_size = get_shard_size(shard)
     return render_template(
-        "map.html", alliance_url=botmapurl, shard=shard, maxroom=maxroom
+        "map.html", alliance_url=botmapurl, shard=shard, max_size=max_size
     )
 
 

@@ -47,6 +47,10 @@ var ScreepsMap = (function () {
         this.style = config.style || {};
 
         this.config = config;
+        this.config.showTerrain ??= true;
+        this.config.showZones ??= true;
+        this.config.showControl ??= true;
+        this.config.showLabels ??= true;
     }
 
     ScreepsMap.prototype.setRoomData = function (roomData) {
@@ -108,16 +112,15 @@ var ScreepsMap = (function () {
         }
     }
 
-    ScreepsMap.prototype.setSpinnerVisibile = function (show) {
+    ScreepsMap.prototype.setSpinnerVisible = function (show) {
         let container = document.getElementById(this.spinnerHostId);
         container.className = (show)
             ? "ScreepsMapFlex spinner"
             : "ScreepsMapFlex";
-        console.log(show, this.shard, this.spinnerHostId, container)
     }
 
     ScreepsMap.prototype.render = function () {
-        this.setSpinnerVisibile(true);
+        this.setSpinnerVisible(true);
 
         this.loadTerrainAsync(function () {
             let regionBounds = this.getRegionBounds();
@@ -134,6 +137,9 @@ var ScreepsMap = (function () {
                 ]
             ];
 
+            if (this.map) {
+                this.map.remove();
+            }
             this.map = L.map(this.mapHostId, {
                 crs: L.CRS.Simple,
                 minZoom: -3.5,
@@ -142,51 +148,54 @@ var ScreepsMap = (function () {
                 zoomDelta: 0.75,
                 attributionControl: false
             });
-            console.log(this.shard, this.map)
             this.map.fitBounds(mapBounds);
 
-            let controlLayer = (new L.LayerGroup());
-            let labelLayer = (new L.LayerGroup());
             let terrainLayer = L.imageOverlay(this.terrainUri, regionBounds);
             let zoneLayer = (new L.LayerGroup());
+            let controlLayer = (new L.LayerGroup());
+            let labelLayer = (new L.LayerGroup());
 
-            this.drawRoomLayer(controlLayer, zoneLayer);
+            this.drawRoomLayer(controlLayer);
             this.drawLabelLayer(labelLayer);
+
+            if (this.config.showTerrain) {
+                terrainLayer.addTo(this.map);
+            }
+            if (this.config.showZones) {
+                zoneLayer.addTo(this.map);
+            }
+            if (this.config.showControl) {
+                controlLayer.addTo(this.map);
+            }
+            if (this.config.showLabels) {
+                labelLayer.addTo(this.map);
+            }
 
             let overlays = {
                 "Terrain": terrainLayer,
+                "Zones": zoneLayer,
                 "Rooms": controlLayer,
                 "Labels": labelLayer,
-                "Zones": zoneLayer,
             };
-            console.log(1, overlays)
             L.control.layers({}, overlays).addTo(this.map);
 
-            if (this.config.showTerrain === undefined || this.config.showTerrain === true) {
-                console.log(2, this.shard, 'addTerrain', this.map)
-                terrainLayer.addTo(this.map);
-            }
-            if (this.config.showControl === undefined || this.config.showControl === true) {
-                console.log(3, this.shard, 'addControl')
-                controlLayer.addTo(this.map);
-            }
-            if (this.config.showLabels === undefined || this.config.showLabels === true) {
-                console.log(4, this.shard, 'addLabel')
-                labelLayer.addTo(this.map);
-            }
-            zoneLayer.addTo(this.map);
-
-            if (this.groupType == 'user') {
-                this.drawUserLegend();
-            } else {
-                this.drawAllianceLegend();
+            switch (this.groupType) {
+                case 'user':
+                    this.drawUserLegend();
+                    break;
+                case 'alliance':
+                    this.drawAllianceLegend();
+                    break;
+                default:
+                    break;
             }
 
             this.createRoomInfoControl();
-            this.bindRclFilter(controlLayer);
+            if (this.config.showControl) {
+                this.bindRclFilter(controlLayer);
+            }
 
-            this.setSpinnerVisibile(false);
-            console.log(5, this.shard, "End")
+            this.setSpinnerVisible(false);
         }.bind(this));
     }
 
@@ -415,10 +424,6 @@ var ScreepsMap = (function () {
             let bounds = this.rectToBounds(rect);
 
             if (room.owner) {
-                let allianceName = this.userAlliance[room.owner];
-                if (!allianceName) {
-                    allianceName = 'unaffiliated'
-                }
                 let targetLayer = rclLayers[room.level];
                 let fillColor = this.getUserColor(room.owner);
                 let fillOpacity = (room.level !== 0) ? 0.75 : 0.5;

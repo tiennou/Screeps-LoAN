@@ -1,78 +1,68 @@
-{% macro map(alliance_url='alliances.js', shard='shard0', maxroom=100, shortname=none, grouptype=none,
-unaffiliated=none, disablelabels=none) -%}
+{% macro map(alliance_url='alliances.js', shard='shard0', max_size=100, short_name=none, group_type=none, unaffiliated=false, show_labels=true, show_control=true) -%}
+{% from "macros/_map_tooltip.html" import map_tooltip with context %}
+
 
 <div class="unit whole">
     <div id="ScreepsMapFlex" class="ScreepsMapFlex spinner">
         <div id="ScreepsMapContainer" class="ScreepsMapContainer"></div>
         <div id="ScreepsColorKeyContainer" class="ScreepsColorKeyContainer"></div>
     </div>
-    <div id="ScreepsMapTooltip" class="ScreepsMapTooltip" style="display: none;">
-        <dl>
-            <dt>Room:</dt>
-            <div class="roomName"></div>
-            <dt>Type:</dt>
-            <div class="roomType"></div>
-            <dt>RCL:</dt>
-            <div class="roomLevel"></div>
-            <dt>Owner:</dt>
-            <div class="roomOwner"></div>
-            <dt>Alliance:</dt>
-            <div class="roomAlliance"></div>
-            <dt>Zone:</dt>
-            <div class="zoneType"></div>
-            <dt>Zone end:</dt>
-            <div class="zoneEnd"></div>
-        </dl>
-    </div>
+
+    {{ map_tooltip() }}
 
     <script type="text/javascript" language="javascript">
+        const maxSize = {{ max_size }};
+        const alliance_url = '{{ alliance_url }}';
+        const shard = '{{ shard }}';
+        const shortName = {% if short_name %}'{{ short_name }}'{% else %}undefined{% endif %};
+        const groupType = {% if group_type %}'{{ group_type }}'{% else %}undefined{% endif %};
+        const unaffiliated = {{ unaffiliated | lower }};
+        const showControl = {{ show_control | lower }};
+        const showLabels = {{ show_labels | lower }};
 
-        window.onload = function () {
-            region = new ScreepsRegion("W{{ maxroom }}N{{ maxroom }}", "E{{ maxroom }}S{{ maxroom }}");
+        window.onload = async function () {
+            region = new ScreepsRegion(`W${maxSize}N${maxSize}`, `E${maxSize}S${maxSize}`);
             mapView = new ScreepsMap(
                 {
                     spinnerHostId: "ScreepsMapFlex",
                     mapHostId: "ScreepsMapContainer",
                     legendHostId: "ScreepsColorKeyContainer",
                     roomTooltipHostId: "ScreepsMapTooltip",
-                    terrainUri: "/static/img/screeps_{{ shard }}_terrain.png",
+                    terrainUri: `/static/img/screeps_${shard}_terrain.png`,
                     legendUrlPrefix: '/a/',
-                    shard: "{{ shard }}",
-                    region: region,
-                    {% if disablelabels %}
-                    showLabels: false,
-                    {% endif %}
+                    shard,
+                    region,
+                    showLabels,
+                    showControl,
                     style: { 'room-padding': 10 }
             });
-            mapView.setSpinnerVisibile(true);
-            $.when(
-                $.getJSON('{{ alliance_url }}', {}, function (data) {
-                    console.log('alliance data loaded')
-                    if ('{{ alliance_url }}' === "/vk/bots/league.json")
-                        data = data.bots
-                    mapView.setAllianceData(data)
-                }),
-                $.getJSON('/map/{{ shard }}/rooms.js', {}, function (data) {
-                    console.log('room data loaded')
-                    mapView.setRoomData(data)
-                }),
-                $.getJSON('/scanner/{{ shard }}.novice.area.json', {}, (data) => {
-                    console.log('zone data loaded')
-                    mapView.setZoneData(data)
-                }),
-            ).then(function () {
-                {% if shortname %}
-                mapView.setAlliance('{{ shortname }}');
-                mapView.setGroupType('user')
-                {% endif %}
-                {% if grouptype %}
-                mapView.setGroupType('{{ grouptype }}');
-                {% endif %}
-                {% if unaffiliated %}
+            mapView.setSpinnerVisible(true);
+
+            const roomData = await $.getJSON('/map/{{ shard }}/rooms.js');
+            console.log('room data loaded');
+            mapView.setRoomData(roomData);
+
+            let alliances = await $.getJSON(alliance_url);
+            console.log('alliance data loaded');
+            if (alliance_url === "/vk/bots/league.json")
+                alliances = alliances.bots;
+            mapView.setAllianceData(alliances);
+
+            const zoneData = await $.getJSON('/scanner/{{ shard }}.novice.area.json');
+            console.log('zone data loaded');
+            mapView.setZoneData(zoneData);
+
+            if (shortName) {
+                mapView.setAlliance(shortName);
+                mapView.setGroupType('user');
+            }
+            if (groupType) {
+                mapView.setGroupType(groupType);
+            }
+            if (unaffiliated) {
                 mapView.allowUnaffiliated();
-                {% endif %}
-                mapView.render();
-            });
+            }
+            mapView.render();
         }
     </script>
 </div>

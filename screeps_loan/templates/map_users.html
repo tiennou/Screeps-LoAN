@@ -16,5 +16,5 @@
 {% endblock %}
 
 {% block content %}
-{{ map(grouptype='user', shard=shard, maxroom=maxroom, unaffiliated=true, disablelabels=true) }}
+{{ map(group_type='user', shard=shard, max_size=max_size, unaffiliated=true, show_labels=false) }}
 {% endblock %}
