@@ -18,14 +18,16 @@ unaffiliated=none, disablelabels=none) -%}
             <div class="roomOwner"></div>
             <dt>Alliance:</dt>
             <div class="roomAlliance"></div>
+            <dt>Zone:</dt>
+            <div class="zoneType"></div>
+            <dt>Zone end:</dt>
+            <div class="zoneEnd"></div>
         </dl>
     </div>
 
     <script type="text/javascript" language="javascript">
 
         window.onload = function () {
-            alliance_data = {}
-            room_data = {}
             region = new ScreepsRegion("W{{ maxroom }}N{{ maxroom }}", "E{{ maxroom }}S{{ maxroom }}");
             mapView = new ScreepsMap(
                 {
@@ -48,17 +50,17 @@ unaffiliated=none, disablelabels=none) -%}
                     console.log('alliance data loaded')
                     if ('{{ alliance_url }}' === "/vk/bots/league.json")
                         data = data.bots
-                    alliance_data = data
+                    mapView.setAllianceData(data)
                 }),
                 $.getJSON('/map/{{ shard }}/rooms.js', {}, function (data) {
                     console.log('room data loaded')
-                    room_data = data
-                })
+                    mapView.setRoomData(data)
+                }),
+                $.getJSON('/scanner/{{ shard }}.novice.area.json', {}, (data) => {
+                    console.log('zone data loaded')
+                    mapView.setZoneData(data)
+                }),
             ).then(function () {
-                mapView.setData(
-                    room_data,
-                    alliance_data
-                );
                 {% if shortname %}
                 mapView.setAlliance('{{ shortname }}');
                 mapView.setGroupType('user')

@@ -13,6 +13,7 @@ services:
       - ./data/loan:/data
       - ./data/storage:${OBJECT_STORAGE}
       - ./data/vk:/app/screeps_loan/static/vk
+      - ./data/scanner:/app/screeps_loan/static/scanner
     environment:
       - FLASK_ENV=development
     ports:
@@ -20,6 +21,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+  scanner:
+    platform: linux/x86_64
+    image: ags131/sector-scanner
+    build: sector-scanner
+    volumes:
+      - ./data/scanner:/app/data
   postgres:
     image: postgres
     environment:

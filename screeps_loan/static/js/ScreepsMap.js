@@ -49,8 +49,11 @@ var ScreepsMap = (function () {
         this.config = config;
     }
 
-    ScreepsMap.prototype.setData = function (roomData, allianceData) {
+    ScreepsMap.prototype.setRoomData = function (roomData) {
         this.roomData = roomData;
+    }
+
+    ScreepsMap.prototype.setAllianceData = function (allianceData) {
         this.allianceData = allianceData;
 
         this.allianceData['unaffiliated'] = {
@@ -68,6 +71,22 @@ var ScreepsMap = (function () {
                 this.userAlliance[userName] = allianceName;
             }
         }
+    }
+
+    ScreepsMap.prototype.setZoneData = function (zoneData) {
+        this.zoneData = {}
+        for (let type of ["novice", "respawnArea"]) {
+            for (let [tick, rooms] of Object.entries(zoneData[type])) {
+                for (const roomName of rooms) {
+                    this.zoneData[roomName] = { type: type, end: tick };
+                }
+            }
+        }
+    }
+
+    ScreepsMap.prototype.setData = function (roomData, allianceData) {
+        this.setRoomData(roomData);
+        this.setAllianceData(allianceData);
     }
 
     ScreepsMap.prototype.setAlliance = function (alliance) {
@@ -129,14 +148,16 @@ var ScreepsMap = (function () {
             let controlLayer = (new L.LayerGroup());
             let labelLayer = (new L.LayerGroup());
             let terrainLayer = L.imageOverlay(this.terrainUri, regionBounds);
+            let zoneLayer = (new L.LayerGroup());
 
-            this.drawRoomLayer(controlLayer);
+            this.drawRoomLayer(controlLayer, zoneLayer);
             this.drawLabelLayer(labelLayer);
 
             let overlays = {
                 "Terrain": terrainLayer,
                 "Rooms": controlLayer,
-                "Labels": labelLayer
+                "Labels": labelLayer,
+                "Zones": zoneLayer,
             };
             console.log(1, overlays)
             L.control.layers({}, overlays).addTo(this.map);
@@ -153,6 +174,7 @@ var ScreepsMap = (function () {
                 console.log(4, this.shard, 'addLabel')
                 labelLayer.addTo(this.map);
             }
+            zoneLayer.addTo(this.map);
 
             if (this.groupType == 'user') {
                 this.drawUserLegend();
@@ -266,6 +288,11 @@ var ScreepsMap = (function () {
         });
     }
 
+    /**
+     *
+     * @param {HTMLDivElement} tooltip
+     * @param {string} roomName
+     */
     ScreepsMap.prototype.populateTooltip = function (tooltip, roomName) {
         tooltip.querySelector(".roomName").innerHTML = roomName;
         if (this.roomData[roomName]) {
@@ -289,6 +316,14 @@ var ScreepsMap = (function () {
             tooltip.querySelector(".roomOwner").innerHTML = "N/A";
             tooltip.querySelector(".roomAlliance").innerHTML = "N/A";
             tooltip.querySelector(".roomLevel").innerHTML = "N/A";
+        }
+        if (this.zoneData[roomName]) {
+            tooltip.querySelectorAll('dt:has(+ .zoneType), .zoneType, dt:has(+ .zoneEnd), .zoneEnd').forEach(e => e.style.removeProperty("display"));
+            const { type, end } = this.zoneData[roomName];
+            tooltip.querySelector(".zoneType").innerHTML = `${type === "novice" ? "Novice" : "Respawn"}`;
+            tooltip.querySelector(".zoneEnd").innerHTML = new Date(Number(end)).toLocaleString();
+        } else {
+            tooltip.querySelectorAll('dt:has(+ .zoneType), .zoneType, dt:has(+ .zoneEnd), .zoneEnd').forEach(e => e.style.setProperty("display", "none"));
         }
     }
 
@@ -363,6 +398,10 @@ var ScreepsMap = (function () {
         this.terrainImage.onload = callback;
     }
 
+    ScreepsMap.prototype.getZoneColor = function (zoneName) {
+        return zoneName === "novice" ? "#00FF00" : "#006AFF";
+    }
+
     ScreepsMap.prototype.drawRoomLayer = function (controlLayer) {
         let rclLayers = {};
         for (let i = 0; i <= 8; i++) {
@@ -389,6 +428,28 @@ var ScreepsMap = (function () {
         }
 
         this.rclLayers = rclLayers;
+    }
+
+    ScreepsMap.prototype.drawZoneLayer = function (zoneLayer) {
+        let zoneLayers = {};
+        for (let type of ["novice", "respawnArea"]) {
+            zoneLayers[type] = new L.LayerGroup();
+            zoneLayer.addLayer(zoneLayers[type]);
+        }
+
+        for (let roomName in this.zoneData) {
+            const { type } = this.zoneData[roomName];
+            let rect = this.region.getRoomRect(roomName);
+            let bounds = this.rectToBounds(rect);
+            L.rectangle(bounds, {
+                stroke: false,
+                fillColor: this.getZoneColor(type),
+                fillOpacity: 0.3,
+                interactive: false,
+            }).addTo(zoneLayers[type]);
+        }
+
+        this.zoneLayers = zoneLayers;
     }
 
     ScreepsMap.prototype.drawLabelLayer = function (labelLayer) {

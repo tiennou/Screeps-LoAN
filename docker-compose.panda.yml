@@ -15,6 +15,7 @@ services:
       - ./data/loan:/data
       - ./data/storage:${OBJECT_STORAGE}
       - ./data/vk:/app/screeps_loan/static/vk
+      - ./data/scanner:/app/screeps_loan/static/scanner
     networks:
       - traefik-net
     depends_on:
@@ -40,6 +41,12 @@ services:
     logging: *default-logging
     ports:
       - 5002:5000
+  scanner:
+    platform: linux/x86_64
+    image: ags131/sector-scanner
+    build: sector-scanner
+    volumes:
+      - ./data/scanner:/app/data
   postgresLoAN:
     image: postgres:14
     environment:
