@@ -29,6 +29,21 @@ var DEFAULT_COLORS = [
 
 var DEFAULT_UNCATEGORIZED = '#555'
 
+function parseDate(str) {
+    try {
+        return Date.parse(str);
+    } catch (e) { }
+    return null;
+}
+
+function formatDate(str) {
+    const stamp = parseDate(str);
+    if (stamp) {
+        return new Date(stamp).toLocaleString();
+    }
+    return null;
+}
+
 var ScreepsMap = (function () {
     function ScreepsMap(config) {
         this.spinnerHostId = config.spinnerHostId;
@@ -85,6 +100,16 @@ var ScreepsMap = (function () {
                     this.zoneData[roomName] = { type: type, end: tick };
                 }
             }
+        }
+    }
+
+    ScreepsMap.prototype.setBattleData = function (battleData) {
+        this.battleData = {};
+        for (let battle of battleData.records) {
+            if (battle.shard !== this.shard) continue;
+            const { room } = battle;
+            this.battleData[room] ??= [];
+            this.battleData[room].push(battle);
         }
     }
 
@@ -153,10 +178,16 @@ var ScreepsMap = (function () {
             let terrainLayer = L.imageOverlay(this.terrainUri, regionBounds);
             let zoneLayer = (new L.LayerGroup());
             let controlLayer = (new L.LayerGroup());
+            let battleLayer = (new L.LayerGroup());
             let labelLayer = (new L.LayerGroup());
 
-            this.drawRoomLayer(controlLayer);
-            this.drawLabelLayer(labelLayer);
+            if (this.groupType === 'battle') {
+                this.drawBattleLayer(battleLayer);
+            } else {
+                this.drawRoomLayer(controlLayer);
+                this.drawLabelLayer(labelLayer);
+            }
+            this.drawZoneLayer(zoneLayer);
 
             if (this.config.showTerrain) {
                 terrainLayer.addTo(this.map);
@@ -164,19 +195,27 @@ var ScreepsMap = (function () {
             if (this.config.showZones) {
                 zoneLayer.addTo(this.map);
             }
-            if (this.config.showControl) {
-                controlLayer.addTo(this.map);
-            }
-            if (this.config.showLabels) {
-                labelLayer.addTo(this.map);
+            if (this.groupType === 'battle') {
+                battleLayer.addTo(this.map);
+            } else {
+                if (this.config.showControl) {
+                    controlLayer.addTo(this.map);
+                }
+                if (this.config.showLabels) {
+                    labelLayer.addTo(this.map);
+                }
             }
 
             let overlays = {
                 "Terrain": terrainLayer,
                 "Zones": zoneLayer,
-                "Rooms": controlLayer,
-                "Labels": labelLayer,
             };
+            if (this.groupType === 'battle') {
+                overlays["Battles"] = battleLayer;
+            } else {
+                overlays["Rooms"] = controlLayer;
+                overlays["Labels"] = labelLayer;
+            }
             L.control.layers({}, overlays).addTo(this.map);
 
             switch (this.groupType) {
@@ -225,10 +264,19 @@ var ScreepsMap = (function () {
 
                 let worldPosition = this.worldPositionFromMapCoords(e.latlng);
 
-                if (this.region.worldPositionInBounds(worldPosition.x, worldPosition.y)) {
-                    let roomName = this.region.worldPositionToRoomName(worldPosition.x, worldPosition.y);
-                    window.open("https://screeps.com/a/#!/room/" + this.shard + "/" + roomName, "loan-launch-tab");
+                if (!this.region.worldPositionInBounds(worldPosition.x, worldPosition.y)) return;
+
+                let roomName = this.region.worldPositionToRoomName(worldPosition.x, worldPosition.y);
+                let link;
+                if (this.groupType === 'battle') {
+                    const lastBattle = this.battleData[roomName][this.battleData[roomName].length - 1];
+                    if (!lastBattle) return;
+                    const { firstpvptick } = lastBattle;
+                    link = `https://screeps.com/a/#!/history/${this.shard}/${roomName}?t=${firstpvptick}`;
+                } else {
+                    link = `https://screeps.com/a/#!/room/${this.shard}/${roomName}`;
                 }
+                window.open(link, "loan-launch-tab");
             }.bind(this),
 
             mouseover: function (e) {
@@ -300,39 +348,99 @@ var ScreepsMap = (function () {
     /**
      *
      * @param {HTMLDivElement} tooltip
+     * @param {string} className
+     * @param {string} [label] if unspecified, won't actually create the element
+     */
+    ScreepsMap.prototype.getTooltipElement = function (tooltip, className, label) {
+        let inner = tooltip.querySelector('dl')
+        if (!inner && label) {
+            inner = document.createElement('dl');
+            tooltip.appendChild(inner);
+        }
+
+        let element = tooltip.querySelector(`.${className}`);
+        if (!element && label) {
+            const dt = document.createElement('dt');
+            dt.innerHTML = `${label}:`;
+            inner.appendChild(dt);
+            element = document.createElement('div');
+            element.className = className;
+            const removeMeth = element.remove;
+            element.remove = function () {
+                dt.remove();
+                removeMeth.call(element);
+            }
+            inner.appendChild(element)
+        }
+        return element;
+    }
+
+    /**
+     *
+     * @param {HTMLDivElement} tooltip
      * @param {string} roomName
      */
     ScreepsMap.prototype.populateTooltip = function (tooltip, roomName) {
-        tooltip.querySelector(".roomName").innerHTML = roomName;
+        this.getTooltipElement(tooltip, 'roomName', "Room").innerHTML = roomName;
+
+        if (this.groupType === 'battle') {
+            if (this.battleData[roomName]) {
+                const battle = this.battleData[roomName][this.battleData[roomName].length - 1];
+                const { classification, firstseen, firstpvptick, lastseen, lastpvptick } = battle;
+                this.getTooltipElement(tooltip, 'battleClass', "Class").innerHTML = classification;
+                const first = formatDate(firstseen);
+                if (first) {
+                    this.getTooltipElement(tooltip, 'battleSeen', "Seen").innerHTML = first;
+                } else {
+                    this.getTooltipElement(tooltip, 'battleSeen')?.remove();
+                }
+                this.getTooltipElement(tooltip, 'battleTick', "Tick").innerHTML = firstpvptick;
+                const last = formatDate(lastseen);
+                if (last) {
+                    this.getTooltipElement(tooltip, 'battleLastSeen', "Last Seen").innerHTML = last;
+                } else {
+                    this.getTooltipElement(tooltip, 'battleLastSeen')?.remove();
+                }
+                this.getTooltipElement(tooltip, 'battleLastTick', "Last Tick").innerHTML = lastpvptick;
+            } else {
+                this.getTooltipElement(tooltip, 'battleClass')?.remove();
+                this.getTooltipElement(tooltip, 'battleSeen')?.remove();
+                this.getTooltipElement(tooltip, 'battleTick')?.remove();
+                this.getTooltipElement(tooltip, 'battleLastSeen')?.remove();
+                this.getTooltipElement(tooltip, 'battleLastTick')?.remove();
+            }
+            return;
+        }
+
         if (this.roomData[roomName]) {
             if (this.roomData[roomName].level) {
-                tooltip.querySelector(".roomType").innerHTML = "Owned";
-                tooltip.querySelector(".roomLevel").innerHTML = this.roomData[roomName].level;
+                this.getTooltipElement(tooltip, 'roomType', "Type").innerHTML = "Owned";
+                this.getTooltipElement(tooltip, 'roomLevel', "Level").innerHTML = this.roomData[roomName].level;
             } else {
-                tooltip.querySelector(".roomType").innerHTML = "Reserved";
-                tooltip.querySelector(".roomLevel").innerHTML = "N/A";
+                this.getTooltipElement(tooltip, 'roomType', "Type").innerHTML = "Reserved";
+                this.getTooltipElement(tooltip, 'roomLevel')?.remove();
             }
-            tooltip.querySelector(".roomOwner").innerHTML = this.roomData[roomName].owner;
+            this.getTooltipElement(tooltip, 'roomOwner', "Owner").innerHTML = this.roomData[roomName].owner;
 
             let allianceName = this.userAlliance[this.roomData[roomName].owner];
             if (allianceName && this.allianceData[allianceName]) {
-                tooltip.querySelector(".roomAlliance").innerHTML = this.allianceData[allianceName].name;
+                this.getTooltipElement(tooltip, 'roomAlliance', "Alliance").innerHTML = this.allianceData[allianceName].name;
             } else {
-                tooltip.querySelector(".roomAlliance").innerHTML = "unaffiliated";
+                this.getTooltipElement(tooltip, 'roomAlliance')?.remove();
             }
         } else {
-            tooltip.querySelector(".roomType").innerHTML = "Unowned";
-            tooltip.querySelector(".roomOwner").innerHTML = "N/A";
-            tooltip.querySelector(".roomAlliance").innerHTML = "N/A";
-            tooltip.querySelector(".roomLevel").innerHTML = "N/A";
+            this.getTooltipElement(tooltip, 'roomType', "Type").innerHTML = "Unowned";
+            this.getTooltipElement(tooltip, 'roomOwner')?.remove();
+            this.getTooltipElement(tooltip, 'roomAlliance')?.remove();
+            this.getTooltipElement(tooltip, 'roomLevel')?.remove();
         }
         if (this.zoneData[roomName]) {
-            tooltip.querySelectorAll('dt:has(+ .zoneType), .zoneType, dt:has(+ .zoneEnd), .zoneEnd').forEach(e => e.style.removeProperty("display"));
             const { type, end } = this.zoneData[roomName];
-            tooltip.querySelector(".zoneType").innerHTML = `${type === "novice" ? "Novice" : "Respawn"}`;
-            tooltip.querySelector(".zoneEnd").innerHTML = new Date(Number(end)).toLocaleString();
+            this.getTooltipElement(tooltip, 'zoneType', "Zone").innerHTML = `${type === "novice" ? "Novice" : "Respawn"}`;
+            this.getTooltipElement(tooltip, 'zoneEnd', "Zone end").innerHTML = new Date(Number(end)).toLocaleString();
         } else {
-            tooltip.querySelectorAll('dt:has(+ .zoneType), .zoneType, dt:has(+ .zoneEnd), .zoneEnd').forEach(e => e.style.setProperty("display", "none"));
+            this.getTooltipElement(tooltip, 'zoneType', "Zone")?.remove();
+            this.getTooltipElement(tooltip, 'zoneEnd', "Zone end")?.remove();
         }
     }
 
@@ -455,6 +563,33 @@ var ScreepsMap = (function () {
         }
 
         this.zoneLayers = zoneLayers;
+    }
+
+    ScreepsMap.prototype.drawBattleLayer = function (battleLayer) {
+        for (let [_, battles] of Object.entries(this.battleData)) {
+            for (const battle of battles) {
+                const { room, classification } = battle;
+                let rect = this.region.getRoomRect(room);
+                let bounds = this.rectToBounds(rect);
+                L.rectangle(bounds, {
+                    stroke: false,
+                    fillColor: this.getConflictColor(classification),
+                    fillOpacity: 0.3,
+                    interactive: false,
+                }).addTo(battleLayer);
+            }
+        }
+    }
+
+    ScreepsMap.prototype.getConflictColor = function (cls) {
+        const colors = [
+            "#33cc33",
+            "#3399cc",
+            "#3366cc",
+            "#cc3333",
+            "#ffffff",
+        ];
+        return colors[cls];
     }
 
     ScreepsMap.prototype.drawLabelLayer = function (labelLayer) {

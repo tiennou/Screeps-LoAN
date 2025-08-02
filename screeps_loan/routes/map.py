@@ -109,6 +109,12 @@ def map_bots(shard):
     )
 
 
+@app.route("/map/<shard>/battles")
+def map_battles(shard):
+    max_size = get_shard_size(shard)
+    return render_template("map_battles.html", shard=shard, max_size=max_size)
+
+
 @cache.cache()
 def get_shard_size(shard):
     api = get_client()

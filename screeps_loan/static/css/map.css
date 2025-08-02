@@ -55,6 +55,7 @@
 .ScreepsMapTooltip dl {
     display: flex;
     flex-wrap: wrap;
+    margin-bottom: 0;
 }
 
 .ScreepsMapTooltip dl dt {

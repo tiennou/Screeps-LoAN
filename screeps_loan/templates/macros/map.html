@@ -42,15 +42,20 @@
             console.log('room data loaded');
             mapView.setRoomData(roomData);
 
-            let alliances = await $.getJSON(alliance_url);
-            console.log('alliance data loaded');
-            if (alliance_url === "/vk/bots/league.json")
-                alliances = alliances.bots;
-            mapView.setAllianceData(alliances);
-
             const zoneData = await $.getJSON('/scanner/{{ shard }}.novice.area.json');
             console.log('zone data loaded');
             mapView.setZoneData(zoneData);
+
+            if (groupType === "battle") {
+                let battles = await $.getJSON(`/vk/battles_full.json`);
+                mapView.setBattleData(battles);
+            } else {
+                let alliances = await $.getJSON(alliance_url);
+                console.log('alliance data loaded');
+                if (alliance_url === "/vk/bots/league.json")
+                    alliances = alliances.bots;
+                mapView.setAllianceData(alliances);
+            }
 
             if (shortName) {
                 mapView.setAlliance(shortName);
