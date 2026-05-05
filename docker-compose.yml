@@ -21,12 +21,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    logging: *default-logging
+
   scanner:
     platform: linux/x86_64
     image: ags131/sector-scanner
     build: sector-scanner
     volumes:
       - ./data/scanner:/app/data
+    logging: *default-logging
+
   postgres:
     image: postgres
     environment:
