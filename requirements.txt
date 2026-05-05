@@ -13,5 +13,5 @@ python-dotenv==1.0.0
 requests==2.31.0
 requires==0.10.5
 screepsapi @ git+https://github.com/screepers/python-screeps@v0.5.2
-SQLAlchemy==1.0.15
-sqlalchemy-migrate==0.10.0
+SQLAlchemy==1.4.54
+sqlalchemy-migrate==0.13.0

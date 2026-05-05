@@ -1,6 +1,17 @@
 #!/usr/bin/env python
-from migrate.versioning.shell import main
+import inspect
 import os
+
+# sqlalchemy-migrate 0.13 still calls inspect.getargspec (removed in Python 3.11).
+if not hasattr(inspect, "getargspec"):
+
+    def getargspec(func):
+        spec = inspect.getfullargspec(func)
+        return spec.args, spec.varargs, spec.varkw, spec.defaults
+
+    inspect.getargspec = getargspec
+
+from migrate.versioning.shell import main
 from dotenv import load_dotenv
 
 load_dotenv()
