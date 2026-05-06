@@ -124,10 +124,8 @@ class Map(object):
         else:
             id = row[0]
 
-        s = re.search("\d+$", shard)
-        shard_id = s.group(0)
         query = "INSERT INTO rooms(import, name, level, owner, shard) VALUES(%s, %s, %s, %s, %s)"
-        cursor.execute(query, (self.id, room, level, id, shard_id))
+        cursor.execute(query, (self.id, room, level, id, shard))
 
 
 @app.cli.command()

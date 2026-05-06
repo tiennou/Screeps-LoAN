@@ -36,7 +36,7 @@ GROUP BY alliances.shortname, alliances.fullname, alliances.discord_url, allianc
 HAVING COUNT(DISTINCT rooms.name) > 0
 ORDER BY alliances.shortname;
         """
-        result = db.find_all(query, (shard.replace("shard", "")))
+        result = db.find_all(query, (shard,))
         return [
             {
                 "shortname": i[0],
@@ -149,9 +149,7 @@ HAVING SUM(t.room_count) > 0 -- Add this condition
 ORDER BY
     t.alliance_id;
         """
-        result = db.find_all(
-            query, (import_id, shard.replace("shard", ""), shard.replace("shard", ""))
-        )
+        result = db.find_all(query, (import_id, shard, shard))
         return_value = []
         return [
             {
