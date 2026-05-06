@@ -14,6 +14,10 @@ from screeps_loan.routes.decorators import (
 from screeps_loan.auth_user import AuthPlayer
 import screeps_loan.screeps_client as screeps_client
 import re
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def allowed_file(filename):
@@ -126,10 +130,21 @@ def create_an_alliance():
     my_id = session["my_id"]
     fullname = request.form["fullname"]
 
+    logger.info(request.form["shortname"])
+    logger.info(
+        "Create alliance requested ",
+        extra={"user_id": my_id, "fullname": fullname, "shortname": request.form.get("shortname")},
+    )
+
     if re.match(r"^\w+$", request.form["shortname"]):
         shortname = request.form["shortname"]
     else:
         shortname = re.sub(r"\w+", "", request.form["shortname"])
+
+    logger.debug(
+        "Create alliance normalized shortname",
+        extra={"user_id": my_id, "shortname": shortname},
+    )
 
     alliance_query = alliances_model.AllianceQuery()
     all_alliances = alliance_query.getAll()
@@ -138,6 +153,10 @@ def create_an_alliance():
             return redirect(url_for("alliance_creation"))
 
     alliances_model.create_an_alliance(my_id, fullname, shortname)
+    logger.info(
+        "Create alliance success",
+        extra={"user_id": my_id, "fullname": fullname, "shortname": shortname},
+    )
     return redirect(url_for("my_alliance"))
 
 
