@@ -16,6 +16,7 @@ services:
       - ./data/storage:${OBJECT_STORAGE}
       - ./data/vk:/app/screeps_loan/static/vk
       - ./data/scanner:/app/screeps_loan/static/scanner
+      - ./data/loan-cache:${CACHE_ROOT}
     networks:
       - traefik-net
     depends_on:
